@@ -1,97 +1,40 @@
 import type { Metadata } from "next";
 import "./globals.css";
-
+import Link from "next/link";
 import MobileMenuButton from "./components/MobileMenuButton";
 import MobileMenu from "./components/MobileMenu";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 export const metadata: Metadata = {
   title: "La mia Casa – Deine Bar, Deine Küche, Dein Wohnzimmer",
-  description:
-    "Mediterrane & steirische Küche im edlen Ambiente – Holzofenpizza, Pasta, Salate & Aperitivo in Hartberg.",
+  description: "Mediterrane & steirische Küche im edlen Ambiente – Holzofenpizza, Pasta, Salate & Aperitivo in Hartberg.",
 };
 
-// ⭐ Edle Schrift (La mia Casa) → empfehle später in globals.css einzubinden (Google Font: 'Allura')
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
       <body className="min-h-screen flex flex-col bg-cream text-dark">
 
-        {/* TOPBAR ------------------------------------------------------ */}
-        <header className="
-          sticky top-0 z-50
-          bg-white/80 backdrop-blur-xl
-          border-b border-black/5
-          shadow-[0_2px_10px_rgba(0,0,0,0.05)]
-        ">
-          <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
+        {/* HEADER */}
+        <header className="w-full py-4 bg-white/70 backdrop-blur-md border-b border-black/10 sticky top-0 z-50 shadow-sm">
+          <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
 
-            {/* LOGO (Premium Schriftzug) */}
-            <a
-              href="/"
-              className="font-logo text-[32px] leading-none text-dark"
-            >
+            {/* TEXT LOGO */}
+            <Link href="/" className="font-logo text-3xl tracking-widest text-dark">
               La mia Casa
-            </a>
+            </Link>
 
-            {/* DESKTOP NAV ------------------------------------------------ */}
-            <nav className="hidden md:flex items-center gap-10 text-[15px] font-medium">
-              {[
-                ["Küche", "/speisekarte"],
-                ["Events", "/events"],
-                ["Galerie", "/galerie"],
-                ["Team", "/team"],
-                ["Kontakt", "/kontakt"],
-              ].map(([label, link]) => (
-                <a
-                  key={label}
-                  href={link}
-                  className="
-                    relative text-[#444]
-                    hover:text-dark transition
-                  "
-                >
-                  {label}
-
-                  {/* Underline Animation */}
-                  <span
-                    className="
-                      absolute left-0 -bottom-1 h-[2px] w-0 bg-gold
-                      transition-all duration-300
-                      group-hover:w-full
-                    "
-                  />
-                </a>
-              ))}
+            {/* DESKTOP NAVIGATION */}
+            <nav className="hidden md:flex gap-8 text-sm text-[#444] tracking-wide">
+              <Link href="/speisekarte" className="hover:text-gold transition">Küche</Link>
+              <Link href="/events" className="hover:text-gold transition">Events</Link>
+              <Link href="/galerie" className="hover:text-gold transition">Galerie</Link>
+              <Link href="/team" className="hover:text-gold transition">Team</Link>
+              <Link href="/kontakt" className="hover:text-gold transition">Kontakt</Link>
             </nav>
 
-            {/* CTA rechts ------------------------------------------------ */}
-            <div className="hidden md:flex items-center gap-4">
-              <a
-                href="tel:+43XXXXXXXX"
-                className="
-                  text-sm text-dark font-semibold
-                  hover:text-gold transition
-                "
-              >
-                +43 (0) XXX XXX XXXX
-              </a>
-
-              <a
-                href="/kontakt"
-                className="
-                  px-5 py-2 rounded-lg bg-gold text-dark
-                  font-semibold shadow-sm hover:bg-[#c39645] transition
-                "
-              >
-                Tisch reservieren
-              </a>
-            </div>
-
             {/* MOBILE MENU BUTTON */}
-            <div className="md:hidden">
-              <MobileMenuButton />
-            </div>
+            <MobileMenuButton />
           </div>
         </header>
 
@@ -101,12 +44,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* CONTENT */}
         <main className="flex-1">{children}</main>
 
-        {/* FLOATING WHATSAPP */}
+        {/* WHATSAPP BUTTON */}
         <WhatsAppButton />
 
-        {/* FOOTER ------------------------------------------------------- */}
+        {/* FOOTER */}
         <footer className="mt-20 py-12 bg-dark text-cream">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between">
+          <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between">
 
             <div>
               <h3 className="text-xl font-semibold">La mia Casa</h3>
@@ -125,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
 
-          <div className="max-w-7xl mx-auto px-6 mt-6 opacity-50 text-sm">
+          <div className="max-w-6xl mx-auto px-6 mt-6 opacity-50 text-sm">
             © {new Date().getFullYear()} La mia Casa – Crafted with style by Moni the Brain
           </div>
         </footer>
