@@ -6,12 +6,13 @@ import Link from "next/link";
 export default function MobileMenu() {
   const [open, setOpen] = useState(false);
 
-  // ESC Close + Scroll Lock
+  /* ESC Close + Scroll Lock */
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
       const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
       window.addEventListener("keydown", onKey);
+
       return () => {
         window.removeEventListener("keydown", onKey);
         document.body.style.overflow = "";
@@ -19,25 +20,20 @@ export default function MobileMenu() {
     }
   }, [open]);
 
+  /* Event Listener für externen Button */
+  useEffect(() => {
+    const openFn = () => setOpen(true);
+    window.addEventListener("mobile-menu:open", openFn);
+    return () => window.removeEventListener("mobile-menu:open", openFn);
+  }, []);
+
   return (
     <>
-      {/* OPEN BUTTON */}
-      <button
-        className="
-          md:hidden text-[var(--dark)] text-4xl fixed top-4 right-4 z-50 
-          transition active:scale-95
-        "
-        aria-label="Menü öffnen"
-        onClick={() => setOpen(true)}
-      >
-        ☰
-      </button>
-
       {/* BACKDROP */}
       <div
         aria-hidden={!open}
         className={`
-          fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 z-40 
+          fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 z-40
           ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
         `}
         onClick={() => setOpen(false)}
@@ -48,7 +44,7 @@ export default function MobileMenu() {
         className={`
           fixed top-0 right-0 h-full w-3/4 max-w-sm z-50
           bg-white/95 backdrop-blur-xl shadow-xl p-8
-          transform transition-transform duration-500 will-change-transform
+          transform transition-transform duration-500 
           ${open ? "translate-x-0" : "translate-x-full"}
         `}
         role="dialog"
@@ -60,7 +56,6 @@ export default function MobileMenu() {
             La mia Casa
           </span>
 
-          {/* CLOSE BUTTON */}
           <button
             aria-label="Menü schließen"
             onClick={() => setOpen(false)}
@@ -70,13 +65,13 @@ export default function MobileMenu() {
           </button>
         </div>
 
-        {/* LINE */}
+        {/* Linie */}
         <div className="w-full h-[1px] bg-[rgba(237,146,97,0.35)] mb-10"></div>
 
         {/* NAVIGATION */}
         <nav className="flex flex-col gap-7 text-xl font-medium text-[var(--dark)]">
-          <MobileLink href="/speisekarte" close={() => setOpen(false)}>Küche</MobileLink>
-          <MobileLink href="/team" close={() => setOpen(false)}>Team</MobileLink>
+          <MobileLink href="/speisekarte" close={() => setOpen(false)}>Speisekarte</MobileLink>
+          <MobileLink href="/team" close={() => setOpen(false)}>Über uns</MobileLink>
           <MobileLink href="/kontakt" close={() => setOpen(false)}>Kontakt</MobileLink>
         </nav>
       </aside>
@@ -84,7 +79,8 @@ export default function MobileMenu() {
   );
 }
 
-/* MOBILE LINK – edle Unterstreichung */
+
+/* ------ Edler Nav-Link mit Underline Animation ------ */
 function MobileLink({
   href,
   children,
