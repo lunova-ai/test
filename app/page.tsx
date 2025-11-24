@@ -214,7 +214,7 @@ export default function Page() {
                 La mia Casa – mit Herz &amp; Erfahrung
               </h2>
               <p className="text-lg text-[#444] leading-relaxed mb-4">
-                Erfahrung aus Salzburg, Ischgl, Grafendorf und Stambach –
+                Erfahrung aus Salzburg, Ischgl, Grafendorf –
                 kombiniert mit echter italienischer Herzlichkeit.
               </p>
               <p className="text-lg text-[#444] leading-relaxed">
