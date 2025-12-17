@@ -59,7 +59,7 @@ export default function Kontakt() {
               <circle cx="14" cy="14" r="9" />
               <path d="M14 8 L14 14 L18 16" />
             </svg>
-            <p className="text-sm text-[#555]">Täglich geöffnet (Di Ruhetag)</p>
+            <p className="text-sm text-[#555]">Täglich geöffnet (Di & Mi Ruhetag)</p>
           </div>
 
         </div>
@@ -115,9 +115,9 @@ export default function Kontakt() {
               <div>
                 <p className="font-semibold text-[var(--dark)]">Öffnungszeiten</p>
                 <p>
-                  Mo, Mi, Do, Fr, Sa: 16–24 Uhr<br />
-                  Sonntag: 10:30–19 Uhr<br />
-                  Dienstag: Ruhetag
+                  Mo, Do, Fr & Sa: 16:00 – 24:00 Uhr<br />
+                  So: 10:30 – 20:00 Uhr<br />
+                  Di & Mi: Ruhetag
                 </p>
               </div>
 

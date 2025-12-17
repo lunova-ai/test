@@ -83,12 +83,11 @@ export default function Page() {
                 </div>
 
                 <div>
-                  <p className="font-semibold text-[var(--dark)] mb-1">Öffnungszeiten</p>
-                  <p>
-                    Mo, Mi, Do, Fr, Sa: 16–24 Uhr<br />
-                    Sonntag: 10:30–19 Uhr<br />
-                    Dienstag: Ruhetag
-                  </p>
+                  <p className="text-sm leading-relaxed">
+        Mo, Do, Fr & Sa: 16:00 – 24:00 Uhr<br />
+        So: 10:30 – 20:00 Uhr<br />
+        Di & Mi: Ruhetag
+      </p>
                 </div>
 
                 <div>
