@@ -54,7 +54,7 @@ export default function Kontakt() {
             >
               <path d="M9 5 L7 7 C7 15 13 21 21 21 L23 19 L20 15 L16 16 L12 12 L13 8 Z" />
             </svg>
-            <p className="text-sm text-[#555]">+43 6649238843</p>
+            <p className="text-sm text-[#555]">+43 664 9238843</p>
           </div>
 
           {/* WhatsApp */}
@@ -123,7 +123,7 @@ export default function Kontakt() {
                   href="tel:+436649238843"
                   className="text-[var(--brand)] hover:text-[var(--brand-dark)] transition font-medium"
                 >
-                  +43 6649238843
+                  +43 664 9238843
                 </a>
               </div>
 
@@ -181,10 +181,11 @@ export default function Kontakt() {
           {/* RIGHT — MAP */}
           <div className="rounded-3xl overflow-hidden border border-[#e5e1da] h-[320px] md:h-[460px]">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m...tplatz%205%2C%208230%20Hartberg!5e0!3m2!1sde!2sat!4v00000000000"
+              src="https://www.google.com/maps?q=Hauptplatz%205,%208230%20Hartberg&output=embed"
               width="100%"
               height="100%"
               loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
             />
           </div>
