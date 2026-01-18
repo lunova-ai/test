@@ -4,6 +4,7 @@ import Link from "next/link";
 import MobileMenuButton from "./components/MobileMenuButton";
 import MobileMenu from "./components/MobileMenu";
 import WhatsAppButton from "./components/WhatsAppButton";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "La mia Casa – Ristorante, Bar & Pizzeria in Hartberg",
@@ -206,10 +207,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }),
           }}
         />
+
+        {/* VERCEL SPEED INSIGHTS */}
+        <SpeedInsights />
       </body>
     </html>
   );
 }
+
 
 
 
