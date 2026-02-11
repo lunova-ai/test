@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useMemo, type CSSProperties } from "react";
 
 export function BirthdayOverlay({
   open,
@@ -9,7 +9,48 @@ export function BirthdayOverlay({
   animateBalloons: boolean;
   onClose: () => void;
 }) {
-  // 🔒 Globales Overlay-Flag (für WhatsApp Button & generell UI)
+  // Farben sind konstant – kein Hook nötig, aber useMemo ist ok (und muss immer laufen!)
+  const colors = useMemo(
+    () => ["#ff3b3b", "#ffcc00", "#3b82ff", "#22c55e", "#ff66d9", "#a855f7", "#ff7a00"],
+    []
+  );
+
+  // Ballons: deterministisch (pro animateBalloons toggle) + reduced motion
+  const balloons = useMemo(() => {
+    if (!animateBalloons) return [];
+
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+    const count = reduceMotion ? 7 : 14;
+
+    return Array.from({ length: count }).map((_, i) => {
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      return {
+        key: i,
+        style: {
+          left: `${Math.random() * 92}%`,
+          animationDuration: `${7 + Math.random() * 5}s`,
+          animationDelay: `${Math.random() * 1.5}s`,
+          ["--balloon" as any]: color,
+
+          ["--dx1" as any]: `${-60 + Math.random() * 120}px`,
+          ["--dx2" as any]: `${-80 + Math.random() * 160}px`,
+          ["--dx3" as any]: `${-70 + Math.random() * 140}px`,
+
+          ["--dy1" as any]: `${-40 + Math.random() * 60}px`,
+          ["--dy2" as any]: `${-60 + Math.random() * 90}px`,
+          ["--dy3" as any]: `${-50 + Math.random() * 80}px`,
+
+          ["--rot" as any]: `${-20 + Math.random() * 40}deg`,
+        } as CSSProperties,
+      };
+    });
+  }, [animateBalloons, colors]);
+
+  // 🔒 Globales Overlay-Flag + ESC (nur wenn open)
   useEffect(() => {
     if (!open) return;
 
@@ -17,26 +58,23 @@ export function BirthdayOverlay({
     document.body.dataset.overlay = "open";
     window.dispatchEvent(new Event("overlay:change"));
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+
     return () => {
-      // nur zurücksetzen, wenn wir es gesetzt haben
+      window.removeEventListener("keydown", onKeyDown);
+
       if (prev === undefined) delete document.body.dataset.overlay;
       else document.body.dataset.overlay = prev;
 
       window.dispatchEvent(new Event("overlay:change"));
     };
-  }, [open]);
+  }, [open, onClose]);
 
+  // ✅ erst NACH allen Hooks conditional return
   if (!open) return null;
-
-  const colors = [
-    "#ff3b3b",
-    "#ffcc00",
-    "#3b82ff",
-    "#22c55e",
-    "#ff66d9",
-    "#a855f7",
-    "#ff7a00",
-  ];
 
   return (
     <div
@@ -68,9 +106,7 @@ export function BirthdayOverlay({
         </h2>
 
         <p className="mt-3 text-base md:text-lg text-[#555] leading-relaxed">
-          Ab{" "}
-          <span className="font-semibold text-[var(--dark)]">5 Kindern</span> –
-          feiern, essen &amp; Spaß haben.
+          Ab <span className="font-semibold text-[var(--dark)]">5 Kindern</span> – feiern, essen &amp; Spaß haben.
         </p>
 
         <div className="mt-5 rounded-2xl border border-[#e5e1da] bg-white/80 p-4 text-left">
@@ -104,36 +140,12 @@ export function BirthdayOverlay({
 
       {animateBalloons && (
         <div className="balloon-layer" aria-hidden="true">
-          {Array.from({ length: 14 }).map((_, i) => {
-            const color = colors[Math.floor(Math.random() * colors.length)];
-
-            return (
-              <div
-                key={i}
-                className="balloon balloon-chaos"
-                style={
-                  {
-                    left: `${Math.random() * 92}%`,
-                    animationDuration: `${7 + Math.random() * 5}s`,
-                    animationDelay: `${Math.random() * 1.5}s`,
-                    ["--balloon" as any]: color,
-
-                    ["--dx1" as any]: `${-60 + Math.random() * 120}px`,
-                    ["--dx2" as any]: `${-80 + Math.random() * 160}px`,
-                    ["--dx3" as any]: `${-70 + Math.random() * 140}px`,
-
-                    ["--dy1" as any]: `${-40 + Math.random() * 60}px`,
-                    ["--dy2" as any]: `${-60 + Math.random() * 90}px`,
-                    ["--dy3" as any]: `${-50 + Math.random() * 80}px`,
-
-                    ["--rot" as any]: `${-20 + Math.random() * 40}deg`,
-                  } as CSSProperties
-                }
-              />
-            );
-          })}
+          {balloons.map((b) => (
+            <div key={b.key} className="balloon balloon-chaos" style={b.style} />
+          ))}
         </div>
       )}
     </div>
   );
 }
+

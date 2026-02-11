@@ -7,9 +7,11 @@ import { HighlightTile } from "./HighlightTile";
 export function HeroSection({
   onOpenBirthday,
   onOpenGirlsNight,
+  onOpenSunday,
 }: {
   onOpenBirthday: () => void;
   onOpenGirlsNight: () => void;
+  onOpenSunday: () => void;
 }) {
   return (
     <section
@@ -26,7 +28,7 @@ export function HeroSection({
       <div className="relative max-w-6xl mx-auto px-6 py-16 md:py-24 grid gap-12 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] items-start">
         {/* LINKS */}
         <FadeIn>
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 min-w-0">
             <div className="flex flex-col gap-2">
               <p className="text-xs tracking-[0.28em] uppercase text-[var(--brand)]">
                 Hauptplatz 5 · 8230 Hartberg
@@ -46,64 +48,65 @@ export function HeroSection({
 
             <div className="h-px w-24 bg-[var(--brand)] mt-1" />
 
-            {/* HIGHLIGHTS */}
-            <div className="rounded-2xl border border-[#e5e1da] bg-white/75 px-5 py-5 md:px-6 md:py-6 shadow-[0_18px_45px_rgba(0,0,0,0.04)]">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <p className="text-xs tracking-[0.22em] uppercase text-[var(--brand)]">
-                  Highlights
+            {/* HIGHLIGHTS BOX */}
+            <div className="rounded-3xl border border-[#e5e1da] bg-white/75 px-5 py-6 md:px-7 md:py-7 shadow-[0_18px_55px_rgba(0,0,0,0.05)]">
+              {/* Header wie im Ziel: zentriert, ruhig */}
+              <div className="text-center mb-6">
+                <p className="font-cinzel text-3xl md:text-4xl tracking-tight text-[var(--dark)]">
+                  ✨ Highlights
                 </p>
-
-                {/* kleine “Klick mich” Hilfe (subtil) */}
-                <span className="hidden sm:inline-flex text-[11px] tracking-[0.18em] uppercase text-[#666]">
-                  Tipp: Antippen für Details ✨
-                </span>
+                <p className="mt-2 text-sm md:text-base text-[#666]">
+                  Unsere Specials &amp; Fixtermine.
+                </p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Kindergeburtstag */}
-                <div className="relative">
-                  {/* Mini-Badge: erhöht Klickrate, weil “Event/Info” sofort sichtbar */}
-                  <span className="pointer-events-none absolute -top-2 -right-2 z-10 inline-flex items-center rounded-full bg-[var(--brand)]/15 text-[var(--brand-dark)] border border-[var(--brand)]/20 px-2.5 py-1 text-[11px] font-semibold shadow-sm">
-                    🎈 Party-Details
-                  </span>
-
+              {/* Karten: gleiche Höhe, sauberer Umbruch */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+                <div className="min-w-0">
                   <HighlightTile
-                    kicker="Special"
+                    kicker="Spezial"
                     title="Kindergeburtstag 🎉"
                     meta="Ab 5 Kindern"
                     text="Feiern, lachen & Pizza genießen."
-                    hint="🎈 Klick & lass die Party starten"
-                    icon="party"
+                    hint="🎈 Party-Details ansehen"
                     onClick={onOpenBirthday}
                   />
                 </div>
 
-                {/* Mädlsabend */}
-                <div className="relative">
-                  <span className="pointer-events-none absolute -top-2 -right-2 z-10 inline-flex items-center rounded-full bg-white/80 text-[#5a2896] border border-[#e5e1da] px-2.5 py-1 text-[11px] font-semibold shadow-sm">
-                    🍸 Jeden Do · 16 Uhr
-                  </span>
-
+                <div className="min-w-0">
                   <HighlightTile
-                    kicker="Fix jede Woche"
+                    kicker="Fixtermin"
                     title="Mädlsabend 🍸"
-                    meta="Donnerstag ab 16 Uhr"
+                    meta="Donnerstag · ab 16 Uhr"
                     text="Manchmal ist das die beste Therapie."
-                    hint="✨ Night-Vibes entdecken"
-                    icon="cocktail"
+                    hint="✨ Ladies-Night entdecken"
                     onClick={onOpenGirlsNight}
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <HighlightTile
+                    kicker="Sonntag"
+                    title="Durchgehend Küche ☀️"
+                    meta="11–19 Uhr"
+                    text="Perfekt für einen entspannten Sonntag – ohne Küchenpause."
+                    hint="☀️ Sonntags-Infos ansehen"
+                    onClick={onOpenSunday}
                   />
                 </div>
               </div>
 
-              <div className="mt-5 text-sm md:text-base text-[#555]">
-                <p>Dann komm zu uns – wir freuen uns auf dich.</p>
-                <p className="mt-1 text-xs md:text-sm text-[#666]">
+              {/* Copy + Buttons wie im Ziel zentriert */}
+              <div className="mt-7 text-center text-sm md:text-base text-[#555]">
+                <p className="font-medium text-[var(--dark)]">
+                  Dann komm zu uns – wir freuen uns auf dich.
+                </p>
+                <p className="mt-2 text-xs md:text-sm text-[#666]">
                   Fragen? Schreib uns gerne per WhatsApp oder ruf einfach an.
                 </p>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
                 <a href="/speisekarte" className="btn-brand text-sm md:text-base">
                   Speisekarte ansehen
                 </a>

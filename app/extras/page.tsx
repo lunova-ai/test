@@ -1,452 +1,591 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FadeIn from "../home/components/FadeIn";
 import Link from "next/link";
 
-type PizzaAnswer = "classic" | "creative" | "sharing" | "comfort";
+type SpritzMood = "sun" | "rain" | "date" | "friends" | "quick" | "wildcard";
 
-type PizzaQuestion = {
-  id: number;
-  question: string;
-  options: {
-    label: string;
-    value: PizzaAnswer;
-  }[];
-};
-
-type DishSuggestion = {
+type Recommendation = {
   id: string;
   title: string;
-  mood: string;
-  description: string;
-  link?: string;
+  subtitle: string;
+  drink: string;
+  food: string;
+  vibe: string;
+  tip: string;
+  cta: { label: string; href: string };
 };
 
-type Recipe = {
+type BarHack = {
   id: string;
   title: string;
-  teaser: string;
-  difficulty: "easy" | "medium";
-  time: string;
-  servings: string;
-  ingredients: string[];
-  steps: string[];
+  text: string;
+  badge: string;
 };
 
-type TriviaQuestion = {
+type CocktailQuizAnswer = "spritz" | "sour" | "bitter" | "fruity";
+
+type CocktailQuizQuestion = {
   id: number;
   question: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
+  options: { label: string; value: CocktailQuizAnswer }[];
 };
+
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function prefersReducedMotion() {
+  if (typeof window === "undefined") return true;
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? true;
+}
+
+/* --------------------------------------------------------
+   Confetti (Canvas) – no libs, reduced-motion safe
+-------------------------------------------------------- */
+
+type ConfettiPiece = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  w: number;
+  h: number;
+  life: number;
+  ttl: number;
+  spin: number;
+  rot: number;
+};
+
+function ConfettiBurst({
+  fireKey,
+  className,
+}: {
+  fireKey: number;
+  className?: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const piecesRef = useRef<ConfettiPiece[]>([]);
+  const lastTsRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resize = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const rect = parent.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const parent = canvas.parentElement;
+    const rect = parent?.getBoundingClientRect();
+    if (!rect) return;
+
+    const originX = rect.width * (0.22 + Math.random() * 0.56);
+    const originY = rect.height * 0.18;
+
+    const colors = [
+      "rgba(237,146,97,0.95)",
+      "rgba(255,205,100,0.95)",
+      "rgba(255,120,140,0.95)",
+      "rgba(120,190,255,0.95)",
+      "rgba(170,110,255,0.95)",
+      "rgba(120,230,170,0.95)",
+    ];
+
+    const count = 90;
+    const pieces: ConfettiPiece[] = [];
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI / 2 + (-0.85 + Math.random() * 1.7);
+      const speed = 180 + Math.random() * 280;
+
+      pieces.push({
+        x: originX,
+        y: originY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        w: 6 + Math.random() * 8,
+        h: 3 + Math.random() * 6,
+        life: 0,
+        ttl: 900 + Math.random() * 700,
+        spin: -7 + Math.random() * 14,
+        rot: Math.random() * Math.PI * 2,
+      });
+    }
+
+    (pieces as any)._colors = colors;
+    piecesRef.current = pieces;
+    lastTsRef.current = 0;
+
+    const gravity = 820;
+
+    const loop = (ts: number) => {
+      if (!ctx || !canvas) return;
+
+      if (!lastTsRef.current) lastTsRef.current = ts;
+      const dt = Math.min(0.033, (ts - lastTsRef.current) / 1000);
+      lastTsRef.current = ts;
+
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const palette: string[] = (piecesRef.current as any)._colors || colors;
+
+      piecesRef.current = piecesRef.current
+        .map((p, idx) => {
+          p.life += dt * 1000;
+          p.vy += gravity * dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.rot += p.spin * dt;
+
+          p.vx *= 0.995;
+          p.vy *= 0.997;
+
+          const alpha = Math.max(0, 1 - p.life / p.ttl);
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = palette[idx % palette.length];
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+
+          return p;
+        })
+        .filter((p) => p.life < p.ttl && p.y < h + 40);
+
+      if (piecesRef.current.length > 0) {
+        rafRef.current = requestAnimationFrame(loop);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      piecesRef.current = [];
+    };
+  }, [fireKey]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={cx("absolute inset-0 pointer-events-none", className)}
+      aria-hidden="true"
+    />
+  );
+}
+
+/* --------------------------------------------------------
+   UI Bits
+-------------------------------------------------------- */
+
+function Card({
+  eyebrow,
+  title,
+  children,
+  right,
+  className,
+}: {
+  eyebrow?: string;
+  title: string;
+  children: React.ReactNode;
+  right?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cx(
+        "relative overflow-hidden rounded-3xl bg-white/90 border border-[#e5dfd7] p-6 md:p-8",
+        "shadow-[0_16px_40px_rgba(0,0,0,0.04)]",
+        className
+      )}
+    >
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
+        <div>
+          {eyebrow ? (
+            <p className="text-xs tracking-[0.22em] uppercase text-[var(--brand)]">
+              {eyebrow}
+            </p>
+          ) : null}
+          <h2 className="text-2xl md:text-3xl font-cinzel text-[var(--dark)] mt-1">
+            {title}
+          </h2>
+        </div>
+        {right ? <div className="shrink-0">{right}</div> : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function MoodButton({
+  active,
+  label,
+  onClick,
+}: {
+  active?: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "px-4 py-2 rounded-full border text-sm transition",
+        "active:scale-[0.99]",
+        active
+          ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand-dark)]"
+          : "border-[#e5dfd7] bg-white hover:border-[var(--brand)] hover:bg-[var(--brand)]/5 text-[#555]"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Chip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-[#e5dfd7] bg-white px-3 py-1 text-xs text-[#666]">
+      {children}
+    </span>
+  );
+}
+
+function getTimeLabel() {
+  const h = new Date().getHours();
+  if (h < 11) return "Vormittag";
+  if (h < 15) return "Mittag";
+  if (h < 18) return "Nachmittag";
+  return "Abend";
+}
+
+/* --------------------------------------------------------
+   Page
+-------------------------------------------------------- */
 
 export default function ExtrasPage() {
-  /* --------------------------------------------------------
-     1) PIZZA-PERSÖNLICHKEITS-QUIZ
-  -------------------------------------------------------- */
+  const timeLabel = useMemo(() => getTimeLabel(), []);
 
-  const pizzaQuestions: PizzaQuestion[] = useMemo(
+  const hacks: BarHack[] = useMemo(
+    () => [
+      { id: "h1", badge: "Pro-Tipp", title: "Aperitivo-Regel", text: "Erst ein Drink, dann entscheiden. Macht aus „nur kurz“ automatisch einen guten Abend." },
+      { id: "h2", badge: "Sharing", title: "Gruppen-Strategie", text: "Eine Pizza zum Teilen + ein Pasta-Gericht extra = alle happy. Wirklich." },
+      { id: "h3", badge: "Date", title: "Gemütlich ohne Mühe", text: "Start an der Bar, dann teilen. Klingt simpel — ist aber der Trick." },
+      { id: "h4", badge: "Mood", title: "Genießen statt hetzen", text: "Kein Stress. Ein guter Abend ist keine To-do-Liste." },
+      { id: "h5", badge: "Bar", title: "Feierabend-Move", text: "Spritz an der Bar, kurzer Blick in die Karte, dann Holzofen. Funktioniert jedes Mal." },
+    ],
+    []
+  );
+
+  const recsByMood: Record<SpritzMood, Recommendation[]> = useMemo(
+    () => ({
+      sun: [
+        {
+          id: "sun-1",
+          title: "Sonnenmodus: Terrasse im Kopf",
+          subtitle: "Frisch, leicht, ein bisschen „Urlaub“.",
+          drink: "Aperol Spritz oder Limoncello Spritz",
+          food: "Aperitivo-Teller + Pizza zum Teilen",
+          vibe: "Du willst Leichtigkeit. Wir liefern Leichtigkeit.",
+          tip: "Bar zuerst. Dann teilen. Dann glücklich.",
+          cta: { label: "Reservieren", href: "/kontakt" },
+        },
+      ],
+      rain: [
+        {
+          id: "rain-1",
+          title: "Regen draußen – Glanz drinnen",
+          subtitle: "Warm, cozy, ohne Drama.",
+          drink: "Rotwein oder Negroni",
+          food: "Lasagne al Forno oder Pasta Comfort",
+          vibe: "Draußen grau. Drinnen: La mia Casa.",
+          tip: "Comfort gewinnt. Immer.",
+          cta: { label: "Speisekarte", href: "/speisekarte" },
+        },
+      ],
+      date: [
+        {
+          id: "date-1",
+          title: "Date-Night (ohne peinliche Momente)",
+          subtitle: "Leise. Gut. Unaufgeregt.",
+          drink: "Ein Glas Wein & „wir schauen mal“",
+          food: "Pizza Speciale zum Teilen",
+          vibe: "Man redet. Man lacht. Man teilt. Perfekt.",
+          tip: "Teilen = weniger Entscheidung, mehr Genuss.",
+          cta: { label: "Tisch sichern", href: "/kontakt" },
+        },
+      ],
+      friends: [
+        {
+          id: "friends-1",
+          title: "Freunde-Modus: Mitte ist Gesetz",
+          subtitle: "Alles in die Mitte. Alle probieren.",
+          drink: "Spritz-Runde für alle",
+          food: "Sharing-Platte + Pizza + „noch kurz“",
+          vibe: "Du bestellst. Alle greifen rein. Ende der Diskussion.",
+          tip: "Ein Extra zum Teilen wirkt wie ein Upgrade.",
+          cta: { label: "Speisekarte", href: "/speisekarte" },
+        },
+      ],
+      quick: [
+        {
+          id: "quick-1",
+          title: "Nur kurz… (hahaha)",
+          subtitle: "Du kommst für 20 Minuten und bleibst 2 Stunden.",
+          drink: "Ein schneller Spritz an der Bar",
+          food: "Kleiner Snack – und dann schauen wir weiter 😉",
+          vibe: "Das Leben ist zu kurz für „nur kurz“.",
+          tip: "Setz dich. Trink. Atme. Der Rest passiert.",
+          cta: { label: "Kontakt", href: "/kontakt" },
+        },
+      ],
+      wildcard: [
+        {
+          id: "wild-1",
+          title: "Wildcard: Wir entscheiden 😈",
+          subtitle: "Heute wird’s spontan gut.",
+          drink: "Spritz oder Negroni – je nach Vibe",
+          food: "Ein Gericht zum Teilen + etwas Warmes",
+          vibe: "Wenn du dich nicht entscheiden willst: perfekt.",
+          tip: "Sag einfach: „Mach mir was Gutes.“",
+          cta: { label: "Reservieren", href: "/kontakt" },
+        },
+      ],
+    }),
+    []
+  );
+
+  const [mood, setMood] = useState<SpritzMood | null>(null);
+  const [rec, setRec] = useState<Recommendation | null>(null);
+  const [hack, setHack] = useState<BarHack>(() => hacks[0]);
+  const [confettiKey, setConfettiKey] = useState(0);
+
+  const rollHack = () => {
+    const candidates = hacks.filter((h) => h.id !== hack?.id);
+    const list = candidates.length ? candidates : hacks;
+    setHack(list[Math.floor(Math.random() * list.length)]);
+  };
+
+  const pickRecommendation = (picked: SpritzMood) => {
+    const pool = recsByMood[picked];
+    const next = pool[Math.floor(Math.random() * pool.length)];
+    setMood(picked);
+    setRec(next);
+    if (!prefersReducedMotion()) setConfettiKey((k) => k + 1);
+  };
+
+  // Cocktail Quiz
+  const cocktailQuiz: CocktailQuizQuestion[] = useMemo(
     () => [
       {
         id: 1,
-        question: "Wie soll dein perfekter Abend im La mia Casa starten?",
+        question: "Was darf dein Drink heute sein?",
         options: [
-          {
-            label: "Ein Spritz an der Bar, ankommen & schauen.",
-            value: "creative",
-          },
-          {
-            label: "Ein Glas Rotwein und Brot mit Olivenöl.",
-            value: "classic",
-          },
-          {
-            label: "Wir bestellen eine Runde für den ganzen Tisch.",
-            value: "sharing",
-          },
-          {
-            label: "Erst mal warm werden mit etwas richtig Sättigendem.",
-            value: "comfort",
-          },
+          { label: "Frisch & spritzig.", value: "spritz" },
+          { label: "Sauer, aber sexy.", value: "sour" },
+          { label: "Bitter – ich mein’s ernst.", value: "bitter" },
+          { label: "Fruchtig & easy.", value: "fruity" },
         ],
       },
       {
         id: 2,
-        question: "Bei Pizza denkst du zuerst an …",
+        question: "Du bestellst an der Bar und sagst …",
         options: [
-          {
-            label: "Tomate, Mozzarella, Prosciutto – so wie früher.",
-            value: "classic",
-          },
-          {
-            label: "Gerne etwas Ungewöhnliches – Käse, Feigen, Brie …",
-            value: "creative",
-          },
-          {
-            label: "Hauptsache viel – wir teilen sowieso alles.",
-            value: "sharing",
-          },
-          {
-            label: "Dicker Belag, viel Käse, Comfort-Food.",
-            value: "comfort",
-          },
+          { label: "„Mach’s leicht & elegant.“", value: "spritz" },
+          { label: "„Ich mag’s mit Kick.“", value: "sour" },
+          { label: "„Überrasch mich – aber erwachsen.“", value: "bitter" },
+          { label: "„Hauptsache schmeckt sofort.“", value: "fruity" },
         ],
       },
       {
         id: 3,
-        question: "Wie wichtig ist dir Schärfe?",
+        question: "Zu Essen passt am besten …",
         options: [
-          {
-            label: "Eher mild, ich genieße lieber die Aromen.",
-            value: "classic",
-          },
-          {
-            label: "Ein bisschen Kick darf sein.",
-            value: "creative",
-          },
-          {
-            label: "Wir bestellen einfach beides – mild & scharf.",
-            value: "sharing",
-          },
-          {
-            label: "Schärfe ist Nebensache, hauptsache warm und satt.",
-            value: "comfort",
-          },
+          { label: "Aperitivo-Teller & Oliven.", value: "spritz" },
+          { label: "Etwas Cremiges / Burrata-Vibe.", value: "sour" },
+          { label: "Herzhaft & würzig.", value: "bitter" },
+          { label: "Leicht & snacky.", value: "fruity" },
         ],
       },
     ],
     []
   );
 
-  const [quizStep, setQuizStep] = useState(0);
-  const [quizAnswers, setQuizAnswers] = useState<PizzaAnswer[]>([]);
-  const [quizResult, setQuizResult] = useState<PizzaAnswer | null>(null);
-
-  const handleQuizAnswer = (value: PizzaAnswer) => {
-    const nextAnswers = [...quizAnswers];
-    nextAnswers[quizStep] = value;
-    setQuizAnswers(nextAnswers);
-
-    const isLast = quizStep === pizzaQuestions.length - 1;
-    if (isLast) {
-      const counts: Record<PizzaAnswer, number> = {
-        classic: 0,
-        creative: 0,
-        sharing: 0,
-        comfort: 0,
-      };
-      nextAnswers.forEach((a) => {
-        counts[a] = (counts[a] || 0) + 1;
-      });
-
-      let best: PizzaAnswer = "classic";
-      let bestScore = -1;
-      (Object.keys(counts) as PizzaAnswer[]).forEach((key) => {
-        if (counts[key] > bestScore) {
-          best = key;
-          bestScore = counts[key];
-        }
-      });
-
-      setQuizResult(best);
-      setQuizStep(pizzaQuestions.length);
-    } else {
-      setQuizStep((s) => s + 1);
-    }
-  };
-
-  const resetQuiz = () => {
-    setQuizAnswers([]);
-    setQuizStep(0);
-    setQuizResult(null);
-  };
-
-  const resultText: Record<
-    PizzaAnswer,
-    { title: string; text: string; link: string }
-  > = {
-    classic: {
-      title: "Du bist Team Klassiker.",
-      text: "Du magst es ehrlich, italienisch und ohne viel Schnickschnack – Margherita, Prosciutto & Co. sind genau dein Ding.",
-      link: "/speisekarte#pizza-klassisch",
-    },
-    creative: {
-      title: "Du bist Team Kreativ.",
-      text: "Neue Kombinationen, besondere Zutaten – Brie, Burrata oder Trüffel dürfen auf deiner Pizza gerne mal auftreten.",
-      link: "/speisekarte#pizza-speciale",
-    },
-    sharing: {
-      title: "Du bist Team Sharing.",
-      text: "Am liebsten bestellt ihr quer durch die Karte und teilt alles. Perfekt für große Runden und Fritto Misto.",
-      link: "/speisekarte#carne-pesce",
-    },
-    comfort: {
-      title: "Du bist Team Comfort-Food.",
-      text: "Warm, satt, herzhaft – Lasagne, Pasta aus dem Ofen und reich belegte Pizzen machen dich glücklich.",
-      link: "/speisekarte#pasta-classico",
-    },
-  };
-
-  /* --------------------------------------------------------
-     2) „WAS ESS ICH HEUTE?“ – ZUFALLSEMPFEHLUNG
-  -------------------------------------------------------- */
-
-  const dishSuggestions: DishSuggestion[] = useMemo(
-    () => [
-      {
-        id: "pizza-brie-crudo",
-        title: "Pizza Brie e Crudo",
-        mood: "Date Night",
-        description:
-          "Paradeisersauce, Mozzarella, Brie und Prosciutto Crudo – cremig, herzhaft und ein bisschen elegant.",
-        link: "/speisekarte#pizza-speciale",
+  const cocktailResult: Record<
+    CocktailQuizAnswer,
+    { title: string; text: string; pick: SpritzMood; cta: { label: string; href: string } }
+  > = useMemo(
+    () => ({
+      spritz: {
+        title: "Du bist Team Spritz 🍊",
+        text: "Leicht, lebendig, ein bisschen Italien – du startest den Abend am liebsten an der Bar.",
+        pick: "sun",
+        cta: { label: "Spritz-Setup anzeigen", href: "#spritz" },
       },
-      {
-        id: "pasta-pescatore",
-        title: "Pasta Pescatore",
-        mood: "Urlaubsgefühl",
-        description:
-          "Spaghetti mit Garnelen, Muscheln und Meeresfrüchten in Paradeisersauce – wie ein Abend an der Küste.",
-        link: "/speisekarte#pasta-speciale",
+      sour: {
+        title: "Du bist Team Sour 🍋",
+        text: "Du magst’s mit Spannung: frisch, frech, mit einem kleinen Kick.",
+        pick: "date",
+        cta: { label: "Sour-Setup anzeigen", href: "#spritz" },
       },
-      {
-        id: "fritto-misto",
-        title: "Fritto Misto di Mare",
-        mood: "Runde mit Freunden",
-        description:
-          "Calamari, Garnelen und Meeresfrüchte – perfekt, wenn mehrere Hände in die Mitte greifen.",
-        link: "/speisekarte#carne-pesce",
+      bitter: {
+        title: "Du bist Team Bitter 🖤",
+        text: "Du bist nicht hier für Zuckerwasser – du willst Charakter im Glas.",
+        pick: "rain",
+        cta: { label: "Bitter-Setup anzeigen", href: "#spritz" },
       },
-      {
-        id: "lasagne",
-        title: "Lasagne della Casa al Forno",
-        mood: "Comfort-Food",
-        description:
-          "Im Ofen überbacken, herzhaft und warm – ideal nach einem langen Tag oder als Soulfood am Wochenende.",
-        link: "/speisekarte#pasta-classico",
+      fruity: {
+        title: "Du bist Team Fruchtig 🍓",
+        text: "Easy, smooth, sofort gut – du willst Genuss ohne Nachdenken.",
+        pick: "friends",
+        cta: { label: "Frucht-Setup anzeigen", href: "#spritz" },
       },
-    ],
+    }),
     []
   );
 
-  const [currentSuggestion, setCurrentSuggestion] =
-    useState<DishSuggestion | null>(null);
+  const [cqStep, setCqStep] = useState(0);
+  const [cqAnswers, setCqAnswers] = useState<CocktailQuizAnswer[]>([]);
+  const [cqResult, setCqResult] = useState<CocktailQuizAnswer | null>(null);
 
-  const rollSuggestion = () => {
-    if (dishSuggestions.length === 0) return;
-    const candidates = dishSuggestions.filter(
-      (d) => d.id !== currentSuggestion?.id
-    );
-    const list = candidates.length > 0 ? candidates : dishSuggestions;
-    const random = list[Math.floor(Math.random() * list.length)];
-    setCurrentSuggestion(random);
+  const answerCocktail = (value: CocktailQuizAnswer) => {
+    const next = [...cqAnswers];
+    next[cqStep] = value;
+    setCqAnswers(next);
+
+    const isLast = cqStep === cocktailQuiz.length - 1;
+    if (!isLast) return setCqStep((s) => s + 1);
+
+    const counts: Record<CocktailQuizAnswer, number> = {
+      spritz: 0,
+      sour: 0,
+      bitter: 0,
+      fruity: 0,
+    };
+    next.forEach((a) => (counts[a] = (counts[a] || 0) + 1));
+
+    let best: CocktailQuizAnswer = "spritz";
+    let bestScore = -1;
+    (Object.keys(counts) as CocktailQuizAnswer[]).forEach((k) => {
+      if (counts[k] > bestScore) {
+        best = k;
+        bestScore = counts[k];
+      }
+    });
+
+    setCqResult(best);
+    // Ergebnis “feiern”
+    if (!prefersReducedMotion()) setConfettiKey((k) => k + 1);
   };
 
-  /* --------------------------------------------------------
-     3) REZEPTE
-  -------------------------------------------------------- */
-
-  const recipes: Recipe[] = useMemo(
-    () => [
-      {
-        id: "bruschetta",
-        title: "Bruschetta wie bei uns",
-        teaser:
-          "Wenige Zutaten, viel Geschmack – perfekt als Starter vor der Pizza.",
-        difficulty: "easy",
-        time: "15 Minuten",
-        servings: "2–4 Personen",
-        ingredients: [
-          "1 Baguette oder Ciabatta",
-          "4–5 reife Tomaten",
-          "1 kleine rote Zwiebel",
-          "1 Knoblauchzehe",
-          "Olivenöl (kaltgepresst)",
-          "Frisches Basilikum",
-          "Salz & Pfeffer",
-        ],
-        steps: [
-          "Brot in Scheiben schneiden und kurz im Ofen oder in der Pfanne anrösten.",
-          "Tomaten klein würfeln, Zwiebel fein hacken.",
-          "Alles mit Olivenöl, Salz, Pfeffer und klein geschnittenem Basilikum vermischen.",
-          "Brot mit einer halbierten Knoblauchzehe einreiben.",
-          "Tomatenmischung auf das warme Brot geben und sofort servieren.",
-        ],
-      },
-      {
-        id: "aperitivo",
-        title: "Kleiner Aperitivo-Teller",
-        teaser:
-          "In 5 Minuten einen Mini-Aperitivo zuhause zaubern – fast wie bei uns an der Bar.",
-        difficulty: "easy",
-        time: "5–10 Minuten",
-        servings: "2 Personen",
-        ingredients: [
-          "Oliven",
-          "Kleines Stück Hartkäse (z.B. Pecorino oder Parmesan)",
-          "Grissini oder Weißbrot",
-          "Getrocknete Tomaten",
-          "Olivenöl & etwas grobes Salz",
-        ],
-        steps: [
-          "Oliven in einer kleinen Schale anrichten.",
-          "Käse in Stücke brechen oder schneiden.",
-          "Getrocknete Tomaten mit etwas Olivenöl beträufeln.",
-          "Alles auf einem kleinen Brett oder Teller anrichten.",
-          "Mit einem Glas Spritz oder Wein genießen.",
-        ],
-      },
-    ],
-    []
-  );
-
-  const [openRecipeId, setOpenRecipeId] = useState<string | null>(null);
-
-  const toggleRecipe = (id: string) => {
-    setOpenRecipeId((current) => (current === id ? null : id));
+  const resetCocktailQuiz = () => {
+    setCqStep(0);
+    setCqAnswers([]);
+    setCqResult(null);
   };
 
-  /* --------------------------------------------------------
-     4) MINI-WISSENSQUIZ (inkl. „Frohe Weihnachten“)
-  -------------------------------------------------------- */
+  const currentCQ = cqStep < cocktailQuiz.length ? cocktailQuiz[cqStep] : null;
 
-  const triviaQuestions: TriviaQuestion[] = useMemo(
-    () => [
-      {
-        id: 1,
-        question: "Was bedeutet „al dente“ bei Pasta wirklich?",
-        options: [
-          "Komplett weich gekocht",
-          "Mit leichtem Biss in der Mitte",
-          "Mit viel Käse überbacken",
-          "Nur mit Salz und Öl gekocht",
-        ],
-        correctIndex: 1,
-        explanation:
-          "„Al dente“ heißt wortwörtlich „zum Zahn“ – also mit leichtem Biss, nicht komplett weich.",
-      },
-      {
-        id: 2,
-        question: "Was landet in Italien traditionell NICHT auf einer Pizza?",
-        options: ["Mozzarella", "Ananas", "Prosciutto", "Frische Tomaten"],
-        correctIndex: 1,
-        explanation:
-          "Die berühmte Pizza Hawaii stammt nicht aus Italien – Ananas ist dort eher ein Running Gag als Klassiker.",
-      },
-      {
-        id: 3,
-        question: "Was ist typisch für einen guten Holzofen?",
-        options: [
-          "Immer exakt 180 °C",
-          "Ein bisschen Rauchgeruch und ungleichmäßige Hitze",
-          "Ausschließlich Gasflamme",
-          "Er wird nur für Brot verwendet",
-        ],
-        correctIndex: 1,
-        explanation:
-          "Der Charme eines Holzofens liegt in der hohen, leicht ungleichmäßigen Hitze und dem Aroma – genau das gibt der Pizza ihren Charakter.",
-      },
-      {
-        id: 4,
-        question: 'Wie heißt „Frohe Weihnachten“ auf Italienisch?',
-        options: ["Buon Natale", "Felice Navidad", "Buona sera", "Ciao Natale"],
-        correctIndex: 0,
-        explanation:
-          "Richtig ist „Buon Natale“. Die anderen Optionen sind zwar bemüht international, aber leider nicht italienisch: „Felice Navidad“ ist Spanisch, „Buona sera“ passt eher zum Abend als zu Weihnachten – und „Ciao Natale“ klingt, als würde man die Feiertage freundlich verabschieden.",
-      },
-    ],
-    []
-  );
-
-  const [triviaState, setTriviaState] = useState<{
-    [id: number]: { selected: number; isCorrect: boolean };
-  }>({});
-
-  const handleTriviaAnswer = (id: number, index: number) => {
-    // Antwort nur einmal zulassen
-    if (triviaState[id]) return;
-
-    const question = triviaQuestions.find((q) => q.id === id);
-    if (!question) return;
-
-    const isCorrect = question.correctIndex === index;
-    setTriviaState((prev) => ({
-      ...prev,
-      [id]: { selected: index, isCorrect },
-    }));
-  };
-
-  /* --------------------------------------------------------
-     RENDER
-  -------------------------------------------------------- */
-
-  const currentQuestion =
-    quizStep < pizzaQuestions.length ? pizzaQuestions[quizStep] : null;
+  // initial content
+  useEffect(() => {
+    rollHack();
+    pickRecommendation("quick");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16 md:py-20 space-y-20">
-      {/* Hero */}
+      {/* HERO */}
       <FadeIn>
         <header className="space-y-4 text-center md:text-left">
           <p className="text-xs tracking-[0.28em] uppercase text-[var(--brand)]">
             Extras
           </p>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-cinzel tracking-tight text-[var(--dark)]">
-            Ein bisschen La mia Casa für zuhause.
+            Spritz, Vibes & kleine Überraschungen.
           </h1>
           <p className="text-lg text-[#555] max-w-3xl mx-auto md:mx-0">
-            Quiz, kleine Rezepte und Inspirationen – alles, was Lust auf deinen
-            nächsten Besuch macht.
+            Spiel dich durch ein paar Extras – und hol dir Inspiration für deinen nächsten La mia Casa Moment.
           </p>
+
+          <div className="pt-3 flex flex-wrap gap-2 justify-center md:justify-start">
+            <Chip>⏰ {timeLabel}</Chip>
+            <Chip>🍊 Spritz-O-Meter 2.0</Chip>
+            <Chip>🍸 Cocktail-Quiz</Chip>
+            <Chip>😈 Wildcard erlaubt</Chip>
+          </div>
         </header>
       </FadeIn>
 
-      {/* 1) Pizza-Persönlichkeits-Quiz */}
+      {/* COCKTAIL QUIZ */}
       <section className="space-y-8">
         <FadeIn>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-cinzel text-[var(--dark)]">
-                Welche Pizza passt heute zu dir?
-              </h2>
-              <p className="mt-2 text-[#555] max-w-2xl">
-                Beantworte ein paar Fragen und wir verraten dir, welche Richtung
-                auf der Karte besonders gut zu dir passt.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={resetQuiz}
-              className="self-start md:self-auto text-sm text-[var(--brand)] hover:text-[var(--brand-dark)]"
-            >
-              Quiz neu starten
-            </button>
-          </div>
-        </FadeIn>
-
-        <FadeIn>
-          <div className="rounded-3xl bg-white/90 border border-[#e5dfd7] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.04)]">
-            {/* Fortschritt */}
+          <Card
+            eyebrow="Cocktail-Quiz"
+            title="Welcher Drink-Typ bist du?"
+            right={
+              <button
+                type="button"
+                onClick={resetCocktailQuiz}
+                className="text-sm text-[var(--brand)] hover:text-[var(--brand-dark)]"
+              >
+                Neu starten
+              </button>
+            }
+          >
             <div className="mb-4 flex items-center justify-between text-xs text-[#777] uppercase tracking-[0.22em]">
-              <span>Pizza-Quiz</span>
+              <span>Fortschritt</span>
               <span>
-                Frage {Math.min(quizStep + 1, pizzaQuestions.length)} /{" "}
-                {pizzaQuestions.length}
+                {Math.min(cqStep + 1, cocktailQuiz.length)} / {cocktailQuiz.length}
               </span>
             </div>
 
-            {currentQuestion && !quizResult && (
+            {!cqResult && currentCQ && (
               <div className="space-y-6">
                 <h3 className="text-lg md:text-xl font-medium text-[var(--dark)]">
-                  {currentQuestion.question}
+                  {currentCQ.question}
                 </h3>
-                <div className="grid gap-3">
-                  {currentQuestion.options.map((opt) => (
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  {currentCQ.options.map((opt) => (
                     <button
                       key={opt.label}
                       type="button"
-                      onClick={() => handleQuizAnswer(opt.value)}
+                      onClick={() => answerCocktail(opt.value)}
                       className="text-left px-4 py-3 rounded-xl border border-[#e5dfd7] bg-white hover:border-[var(--brand)] hover:bg-[var(--brand)]/4 text-sm md:text-base transition"
                     >
                       {opt.label}
@@ -456,242 +595,220 @@ export default function ExtrasPage() {
               </div>
             )}
 
-            {quizResult && (
+            {cqResult && (
               <div className="space-y-4">
                 <p className="text-sm uppercase tracking-[0.22em] text-[var(--brand)]">
                   Ergebnis
                 </p>
                 <h3 className="text-xl md:text-2xl font-cinzel text-[var(--dark)]">
-                  {resultText[quizResult].title}
+                  {cocktailResult[cqResult].title}
                 </h3>
-                <p className="text-[#555] text-sm md:text-base max-w-xl">
-                  {resultText[quizResult].text}
+                <p className="text-[#555] text-sm md:text-base max-w-2xl">
+                  {cocktailResult[cqResult].text}
                 </p>
-                <Link
-                  href={resultText[quizResult].link}
-                  className="inline-flex items-center gap-2 text-sm md:text-base font-semibold text-[var(--brand)] hover:text-[var(--brand-dark)]"
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    pickRecommendation(cocktailResult[cqResult].pick);
+                    // smooth scroll to spritz
+                    const el = document.getElementById("spritz");
+                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  className="btn-brand px-6 py-3 text-sm md:text-base"
                 >
-                  Zur passenden Kategorie der Speisekarte →
-                </Link>
+                  Passendes Setup anzeigen →
+                </button>
+
+                <p className="text-xs text-[#888] mt-3">
+                  Tipp: Du kannst jederzeit neu starten (oder einfach wild drauf los klicken 😈).
+                </p>
               </div>
             )}
-          </div>
+          </Card>
         </FadeIn>
       </section>
 
-      {/* 2) Zufallsempfehlung */}
-      <section className="space-y-6">
+      {/* SPRITZ-O-METER 2.0 */}
+      <section id="spritz" className="space-y-8">
         <FadeIn>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-cinzel text-[var(--dark)]">
-                „Was ess ich heute?“
-              </h2>
-              <p className="mt-2 text-[#555] max-w-2xl">
-                Lass das Schicksal entscheiden – wir schlagen dir ein Gericht
-                von unserer Karte vor.
-              </p>
+          <Card
+            eyebrow="Spritz-O-Meter 2.0"
+            title="Wähl deinen Vibe. Wir liefern das Setup."
+            right={
+              <button
+                type="button"
+                onClick={() => pickRecommendation("wildcard")}
+                className="text-sm text-[var(--brand)] hover:text-[var(--brand-dark)]"
+              >
+                Wildcard 😈
+              </button>
+            }
+            className="bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.86))]"
+          >
+            <div className="absolute inset-0">
+              <ConfettiBurst fireKey={confettiKey} />
             </div>
-            <button
-              type="button"
-              onClick={rollSuggestion}
-              className="btn-brand px-6 py-3 text-sm md:text-base"
-            >
-              Vorschlag würfeln
-            </button>
-          </div>
-        </FadeIn>
 
-        <FadeIn>
-          <div className="rounded-3xl bg-white/90 border border-[#e5dfd7] p-6 md:p-8 min-h-[120px] flex items-center">
-            {currentSuggestion ? (
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.22em] text-[var(--brand)]">
-                  Stimmung: {currentSuggestion.mood}
-                </p>
-                <h3 className="text-xl font-cinzel text-[var(--dark)]">
-                  {currentSuggestion.title}
-                </h3>
-                <p className="text-sm md:text-base text-[#555] max-w-xl">
-                  {currentSuggestion.description}
-                </p>
-                {currentSuggestion.link && (
-                  <Link
-                    href={currentSuggestion.link}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand)] hover:text-[var(--brand-dark)] mt-2"
-                  >
-                    Gericht auf der Speisekarte ansehen →
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm md:text-base text-[#777]">
-                Drück auf „Vorschlag würfeln“ und wir suchen dir etwas Passendes
-                von der Karte aus.
-              </p>
-            )}
-          </div>
-        </FadeIn>
-      </section>
+            <p className="text-[#555] max-w-3xl mb-5 relative">
+              Tipp: Wähl einfach irgendwas. Es ist sehr schwer, hier falsch zu liegen.
+            </p>
 
-      {/* 3) Kleine Rezepte */}
-      <section className="space-y-6">
-        <FadeIn>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-cinzel text-[var(--dark)]">
-                Kleine Rezepte für zuhause
-              </h2>
-              <p className="mt-2 text-[#555] max-w-2xl">
-                Einfach nachzukochen, ohne großes Chaos in der Küche – ideal
-                als Vorgeschmack auf den nächsten Abend bei uns.
-              </p>
+            <div className="flex flex-wrap gap-2 mb-6 relative">
+              <MoodButton active={mood === "sun"} label="☀️ Sonne" onClick={() => pickRecommendation("sun")} />
+              <MoodButton active={mood === "rain"} label="🌧️ Regen" onClick={() => pickRecommendation("rain")} />
+              <MoodButton active={mood === "date"} label="🕯️ Date" onClick={() => pickRecommendation("date")} />
+              <MoodButton active={mood === "friends"} label="🥂 Freunde" onClick={() => pickRecommendation("friends")} />
+              <MoodButton active={mood === "quick"} label="🏃‍♀️ Nur kurz" onClick={() => pickRecommendation("quick")} />
             </div>
-          </div>
-        </FadeIn>
 
-        <FadeIn>
-          <div className="grid gap-6 md:grid-cols-2">
-            {recipes.map((recipe) => {
-              const isOpen = openRecipeId === recipe.id;
-              return (
-                <div
-                  key={recipe.id}
-                  className="rounded-3xl border border-[#e5dfd7] bg-white/90 p-5 md:p-6 shadow-[0_12px_30px_rgba(0,0,0,0.03)]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleRecipe(recipe.id)}
-                    className="w-full text-left flex items-start justify-between gap-3"
-                  >
-                    <div>
-                      <h3 className="text-lg md:text-xl font-cinzel text-[var(--dark)]">
-                        {recipe.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-[#555]">
-                        {recipe.teaser}
-                      </p>
-                      <p className="mt-2 text-xs text-[#777]">
-                        {recipe.time} · {recipe.servings} ·{" "}
-                        {recipe.difficulty === "easy"
-                          ? "Einfach"
-                          : "Mittlerer Aufwand"}
-                      </p>
-                    </div>
-                    <span className="text-sm text-[var(--brand)] mt-1">
-                      {isOpen ? "–" : "+"}
-                    </span>
-                  </button>
-
-                  {isOpen && (
-                    <div className="mt-4 grid gap-3 text-sm text-[#555] md:grid-cols-2">
-                      <div>
-                        <p className="font-semibold mb-1">Zutaten</p>
-                        <ul className="list-disc list-inside space-y-1">
-                          {recipe.ingredients.map((ing) => (
-                            <li key={ing}>{ing}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="font-semibold mb-1">Zubereitung</p>
-                        <ol className="list-decimal list-inside space-y-1">
-                          {recipe.steps.map((step, idx) => (
-                            <li key={idx}>{step}</li>
-                          ))}
-                        </ol>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </FadeIn>
-      </section>
-
-      {/* 4) Mini-Wissensquiz */}
-      <section className="space-y-6">
-        <FadeIn>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-cinzel text-[var(--dark)]">
-                Wie gut kennst du Italien &amp; Pizza?
-              </h2>
-              <p className="mt-2 text-[#555] max-w-2xl">
-                Kleine Fragen rund um Küche, Ofen und Sprache – ganz ohne
-                Prüfungsstress.
-              </p>
-            </div>
-          </div>
-        </FadeIn>
-
-        <FadeIn>
-          <div className="grid gap-5 md:grid-cols-2">
-            {triviaQuestions.map((q) => {
-              const state = triviaState[q.id];
-
-              return (
-                <div
-                  key={q.id}
-                  className="rounded-3xl border border-[#e5dfd7] bg-white/90 p-5 shadow-[0_12px_30px_rgba(0,0,0,0.03)]"
-                >
-                  <p className="text-sm uppercase tracking-[0.18em] text-[var(--brand)] mb-2">
-                    Frage {q.id}
-                  </p>
-                  <p className="text-base md:text-lg font-medium text-[var(--dark)] mb-3">
-                    {q.question}
+            <div className="rounded-2xl border border-[#e5dfd7] bg-white p-5 md:p-6 relative">
+              {rec ? (
+                <div className="space-y-3">
+                  <p className="text-xs tracking-[0.22em] uppercase text-[var(--brand)]">
+                    Dein Setup
                   </p>
 
-                  <div className="space-y-2">
-                    {q.options.map((opt, index) => {
-                      const isSelected = state?.selected === index;
-                      const isCorrect = q.correctIndex === index;
+                  <h3 className="text-xl md:text-2xl font-cinzel text-[var(--dark)] leading-snug">
+                    {rec.title}
+                  </h3>
+                  <p className="text-[#666]">{rec.subtitle}</p>
 
-                      let classes =
-                        "w-full text-left px-4 py-2.5 rounded-xl border text-sm transition";
-
-                      if (!state) {
-                        classes +=
-                          " border-[#e5dfd7] hover:border-[var(--brand)] hover:bg-[var(--brand)]/4";
-                      } else if (isCorrect) {
-                        classes +=
-                          " border-emerald-500/70 bg-emerald-50 text-emerald-800";
-                      } else if (isSelected && !isCorrect) {
-                        classes +=
-                          " border-rose-500/70 bg-rose-50 text-rose-800";
-                      } else {
-                        classes += " border-[#e5dfd7] opacity-70";
-                      }
-
-                      return (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => handleTriviaAnswer(q.id, index)}
-                          className={classes}
-                        >
-                          {opt}
-                        </button>
-                      );
-                    })}
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-2xl border border-[#eee] bg-[var(--cream)]/60 p-4">
+                      <p className="text-sm text-[#777] uppercase tracking-[0.18em]">Drink</p>
+                      <p className="mt-1 text-[#555] font-medium">{rec.drink}</p>
+                    </div>
+                    <div className="rounded-2xl border border-[#eee] bg-[var(--cream)]/60 p-4">
+                      <p className="text-sm text-[#777] uppercase tracking-[0.18em]">Food</p>
+                      <p className="mt-1 text-[#555] font-medium">{rec.food}</p>
+                    </div>
                   </div>
 
-                  {state && (
-                    <p className="mt-3 text-xs md:text-sm text-[#555]">
-                      {state.isCorrect ? "Richtig:" : "Auflösung:"}{" "}
-                      {q.explanation}
+                  <p className="text-[#555] leading-relaxed">{rec.vibe}</p>
+
+                  <div className="rounded-2xl border border-[#e5dfd7] bg-white/70 p-4">
+                    <p className="text-xs tracking-[0.22em] uppercase text-[var(--brand)]">
+                      Mini-Tipp
                     </p>
-                  )}
+                    <p className="mt-1 text-[#555]">{rec.tip}</p>
+                  </div>
+
+                  <div className="pt-2 flex flex-wrap gap-3">
+                    <Link href={rec.cta.href} className="btn-brand px-6 py-3 text-sm md:text-base">
+                      {rec.cta.label}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => pickRecommendation(mood ?? "wildcard")}
+                      className="btn-outline px-6 py-3 text-sm md:text-base"
+                    >
+                      Noch mal 🎲
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-[#888] mt-3">
+                    {prefersReducedMotion()
+                      ? "Animation ist auf deinem Gerät reduziert – fair."
+                      : "Konfetti ist Absicht. Wir stehen dazu."}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
+              ) : (
+                <p className="text-[#777]">Wähl einen Vibe – und wir bauen dir das Setup.</p>
+              )}
+            </div>
+          </Card>
         </FadeIn>
       </section>
+
+      {/* BAR HACKS */}
+      <FadeIn>
+        <Card
+          eyebrow="Bar-Hacks"
+          title="Kleine Tricks für einen richtig guten Abend"
+          right={
+            <button
+              type="button"
+              onClick={rollHack}
+              className="btn-outline px-5 py-2 text-sm"
+            >
+              Neuer Tipp ✨
+            </button>
+          }
+        >
+          <div className="grid gap-5 lg:grid-cols-3">
+            <div className="rounded-3xl border border-[#e5dfd7] bg-white p-5 shadow-[0_12px_30px_rgba(0,0,0,0.03)] lg:col-span-2">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs tracking-[0.22em] uppercase text-[var(--brand)]">
+                  {hack.badge}
+                </p>
+              </div>
+
+              <h3 className="mt-2 text-xl font-cinzel text-[var(--dark)]">
+                {hack.title}
+              </h3>
+              <p className="mt-2 text-[#555] leading-relaxed">
+                {hack.text}
+              </p>
+
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link href="/kontakt" className="btn-brand px-6 py-3 text-sm md:text-base">
+                  Tisch reservieren
+                </Link>
+                <Link href="/speisekarte" className="btn-outline px-6 py-3 text-sm md:text-base">
+                  Speisekarte ansehen
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-[#e5dfd7] bg-[var(--cream)]/50 p-5">
+              <p className="text-xs tracking-[0.22em] uppercase text-[var(--brand)]">
+                Mini-Challenge
+              </p>
+              <h3 className="mt-2 text-lg font-cinzel text-[var(--dark)]">
+                „Nur kurz“-Challenge
+              </h3>
+              <p className="mt-2 text-sm text-[#555] leading-relaxed">
+                Komm „nur kurz“ auf einen Spritz vorbei. Wenn du nach 20 Minuten wieder gehst,
+                bist du offiziell stärker als wir alle.
+              </p>
+
+              <div className="mt-4 rounded-2xl border border-[#e5dfd7] bg-white p-4">
+                <p className="text-xs text-[#777] uppercase tracking-[0.18em]">
+                  Cheat-Code
+                </p>
+                <p className="mt-1 text-sm text-[#555]">
+                  Bar zuerst. Dann passiert’s. 😏
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </FadeIn>
+
+      {/* FOOTER CTA */}
+      <FadeIn>
+        <div className="rounded-3xl border border-[#e5dfd7] bg-white/90 p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.04)]">
+          <h2 className="text-2xl md:text-3xl font-cinzel text-[var(--dark)]">
+            Mach’s nicht kompliziert.
+          </h2>
+          <p className="mt-2 text-[#555] max-w-2xl">
+            Komm vorbei, start an der Bar, und den Rest regeln wir gemeinsam.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/kontakt" className="btn-brand px-7 py-3 text-sm md:text-base">
+              Tisch reservieren
+            </Link>
+            <Link href="/speisekarte" className="btn-outline px-7 py-3 text-sm md:text-base">
+              Speisekarte ansehen
+            </Link>
+          </div>
+        </div>
+      </FadeIn>
     </div>
   );
 }
+
 
 
 

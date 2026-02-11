@@ -6,6 +6,7 @@ import { gallery as galleryData } from "./home/components/gallery";
 import { useLightboxNavigation } from "./home/components/hooks/useLightboxNavigation";
 import { useBirthdayOverlay } from "./home/components/hooks/useBirthdayOverlay";
 import { useGirlsNightOverlay } from "./home/components/hooks/useGirlsNightOverlay";
+import { useSundayOverlay } from "./home/components/hooks/useSundayOverlay";
 
 import { HeroSection } from "./home/components/HeroSection";
 import { InfoBand } from "./home/components/InfoBand";
@@ -18,10 +19,10 @@ import { ContactCTA } from "./home/components/ContactCTA";
 
 import { BirthdayOverlay } from "./home/components/BirthdayOverlay";
 import { GirlsNightOverlay } from "./home/components/GirlsNightOverlay";
+import { SundayOverlay } from "./home/components/SundayOverlay";
 
 export default function Page() {
   const gallery = useMemo(() => galleryData, []);
-
   const [active, setActive] = useState<number | null>(null);
 
   // Kindergeburtstag
@@ -32,12 +33,14 @@ export default function Page() {
   const [showGirlsNight, setShowGirlsNight] = useState(false);
   const [animateBubbles, setAnimateBubbles] = useState(false);
 
+  // Sonntag (neu)
+  const [showSunday, setShowSunday] = useState(false);
+  const [animateSun, setAnimateSun] = useState(false);
+
   // Lightbox Controls
   const close = useCallback(() => setActive(null), []);
   const prev = useCallback(() => {
-    setActive((v) =>
-      v === null ? 0 : (v - 1 + gallery.length) % gallery.length
-    );
+    setActive((v) => (v === null ? 0 : (v - 1 + gallery.length) % gallery.length));
   }, [gallery.length]);
   const next = useCallback(() => {
     setActive((v) => (v === null ? 0 : (v + 1) % gallery.length));
@@ -66,27 +69,36 @@ export default function Page() {
     durationMs: 9000,
   });
 
-  // Öffnen/Schließen sauber kapseln (leichter zu warten)
+  useSundayOverlay({
+    showSunday,
+    setShowSunday,
+    setAnimateSun,
+    durationMs: 8500,
+  });
+
+  // Öffnen/Schließen sauber kapseln
   const openBirthday = useCallback(() => setShowBirthday(true), []);
   const openGirlsNight = useCallback(() => setShowGirlsNight(true), []);
+  const openSunday = useCallback(() => setShowSunday(true), []);
+
   const closeBirthday = useCallback(() => setShowBirthday(false), []);
   const closeGirlsNight = useCallback(() => setShowGirlsNight(false), []);
+  const closeSunday = useCallback(() => setShowSunday(false), []);
 
   return (
     <div className="w-full flex flex-col bg-[var(--cream)]">
-      <HeroSection onOpenBirthday={openBirthday} onOpenGirlsNight={openGirlsNight} />
+      <HeroSection
+        onOpenBirthday={openBirthday}
+        onOpenGirlsNight={openGirlsNight}
+        onOpenSunday={openSunday}
+      />
 
       <InfoBand />
 
       <GallerySection gallery={gallery} onOpen={setActive} />
 
       {active !== null && gallery[active] && (
-        <Lightbox
-          item={gallery[active]}
-          onClose={close}
-          onPrev={prev}
-          onNext={next}
-        />
+        <Lightbox item={gallery[active]} onClose={close} onPrev={prev} onNext={next} />
       )}
 
       <IntroSection />
@@ -94,17 +106,11 @@ export default function Page() {
       <AboutSection />
       <ContactCTA />
 
-      <BirthdayOverlay
-        open={showBirthday}
-        animateBalloons={animateBalloons}
-        onClose={closeBirthday}
-      />
+      <BirthdayOverlay open={showBirthday} animateBalloons={animateBalloons} onClose={closeBirthday} />
 
-      <GirlsNightOverlay
-        open={showGirlsNight}
-        animateBubbles={animateBubbles}
-        onClose={closeGirlsNight}
-      />
+      <GirlsNightOverlay open={showGirlsNight} animateBubbles={animateBubbles} onClose={closeGirlsNight} />
+
+      <SundayOverlay open={showSunday} animateSun={animateSun} onClose={closeSunday} />
     </div>
   );
 }

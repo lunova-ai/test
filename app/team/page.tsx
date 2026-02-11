@@ -79,29 +79,26 @@ export default function Team() {
 
 
       {/* ------------------------------------------------------
-         DANIEL — KÜCHENCHEF
+         TEAMKULTUR + JOIN US
       ------------------------------------------------------ */}
       <FadeIn>
-        <section className="space-y-8 max-w-3xl">
+        <section className="space-y-10 max-w-3xl mx-auto text-center">
 
           <h2 className="text-2xl md:text-3xl font-cinzel text-[var(--dark)]">
-            Daniel – Küchenchef mit Gefühl
+            Mehr als ein Arbeitsplatz
           </h2>
 
           <p className="text-lg text-[#555] leading-relaxed">
-            Daniel ist das kulinarische Herz des Hauses. Für ihn ist Kochen kein Prozess,
-            sondern Ausdruck von Emotion – mit jeder Zutat, jedem Handgriff, jedem Teller.
+            Hinter Karin und Reinhold steht ein kleines, herzliches Team,
+            das jeden Tag mit Freude, Professionalität und Humor zusammenarbeitet.
+            Wir glauben daran, dass man nur dann gute Gastgeber sein kann,
+            wenn man sich auch im Team wohlfühlt.
           </p>
 
-          <blockquote className="italic text-[#555] border-l-2 border-[rgba(237,146,97,0.35)] pl-4 text-lg">
-            „Kochen bedeutet für mich, Emotionen auf den Teller zu bringen – und Gäste 
-            mit jedem Bissen ein Stück Italien spüren zu lassen.“ – Daniel
+          <blockquote className="italic text-[#666] border-l-2 border-[rgba(237,146,97,0.35)] pl-4 text-left">
+            „Respekt, Zusammenhalt und echtes Miteinander sind für uns genauso wichtig
+            wie gutes Essen und zufriedene Gäste.“
           </blockquote>
-
-          <p className="text-lg text-[#555] leading-relaxed">
-            Seine Küche verbindet mediterrane Aromen mit steirischer Bodenständigkeit – 
-            ehrlich, handwerklich und voller Leidenschaft.
-          </p>
 
         </section>
       </FadeIn>
@@ -115,24 +112,39 @@ export default function Team() {
 
 
       {/* ------------------------------------------------------
-         TEAM TEASER — REST DER CREW
+         JOIN OUR TEAM — ELEGANT & SELBSTBEWUSST
       ------------------------------------------------------ */}
       <FadeIn>
-        <section className="space-y-8 text-center">
+        <section className="space-y-8 text-center max-w-2xl mx-auto">
 
           <h2 className="text-2xl md:text-3xl font-cinzel text-[var(--dark)]">
-            Gemeinsam für euch da
+            Werde Teil unseres Teams
           </h2>
 
-          <p className="text-lg text-[#555] max-w-2xl mx-auto leading-relaxed">
-            Hinter Karin, Reinhold und Daniel steht ein kleines, herzliches Team,
-            das jeden Tag dafür sorgt, dass sich Gäste wie zuhause fühlen.
-            Menschen, die mit Freude, Professionalität und Humor zusammenarbeiten –
-            und genau das spürt man auch.
+          <p className="text-lg text-[#555] leading-relaxed">
+            Du liebst Gastronomie, arbeitest gerne im Team und möchtest Gäste
+            nicht nur bedienen, sondern begeistern?
+            Dann passt du vielleicht genau zu uns.
           </p>
 
-          <p className="text-sm text-[#888] italic">
-            Bald gibt es hier Fotos & Details zu unserem gesamten Team.
+          <p className="text-lg text-[#555] leading-relaxed">
+            Wir sind immer offen für motivierte Persönlichkeiten –
+            egal ob Service, Küche oder Bar.
+            Wenn du mit Herz arbeitest und Verantwortung übernehmen möchtest,
+            freuen wir uns, von dir zu hören.
+          </p>
+
+          <div className="mt-6 flex justify-center">
+            <a
+              href="/kontakt"
+              className="btn-brand"
+            >
+              Jetzt bewerben
+            </a>
+          </div>
+
+          <p className="text-sm text-[#888] italic mt-4">
+            Initiativbewerbungen sind jederzeit willkommen.
           </p>
 
         </section>
@@ -141,4 +153,5 @@ export default function Team() {
     </div>
   );
 }
+
 

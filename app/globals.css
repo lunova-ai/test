@@ -605,6 +605,87 @@ h3 {
   }
 }
 
+/* ─────────────────────────────────────────────
+   Sonntag Overlay – warme Lichtstimmung
+   (separat von GirlsNight, keine Side-Effects)
+───────────────────────────────────────────── */
+
+.overlay--sun {
+  /* warmes “Sun Glow” statt violettem Abend-Glow */
+  background:
+    radial-gradient(circle at 30% 15%, rgba(255, 214, 150, 0.22), transparent 55%),
+    radial-gradient(circle at 70% 35%, rgba(255, 235, 190, 0.16), transparent 55%),
+    rgba(0, 0, 0, 0.55);
+}
+
+.popup--sun {
+  /* zarter warmer Touch */
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+}
+
+.sun-eyebrow {
+  color: rgba(255, 214, 150, 0.92);
+}
+
+.sun-title {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.sun-text {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.sun-muted {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.sun-box {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+}
+
+.sun-link {
+  color: rgba(255, 214, 150, 0.95);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Partikel-Layer */
+.sun-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0; /* unter Popup */
+}
+
+/* “Warm light particles” */
+.sun-particle {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 214, 150, 0.95), rgba(255, 214, 150, 0.0) 65%);
+  filter: blur(var(--blur, 10px));
+  animation-name: sunfloat;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  mix-blend-mode: screen;
+}
+
+@keyframes sunfloat {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(var(--dx, 12px), 55vh, 0);
+  }
+  100% {
+    transform: translate3d(calc(var(--dx, 12px) * -0.6), 115vh, 0);
+  }
+}
+
+
 /* ✨ Luxury Bubbles */
 .bubble-lux {
   animation-name: bubble-lux;
@@ -627,6 +708,85 @@ h3 {
   100% {
     transform: translate(var(--dx3, 15px), -120vh);
     opacity: 0;
+  }
+}
+/* ─────────────────────────────────────────────
+   Sonntag Overlay – warme Lichtstimmung
+   (separat von GirlsNight, keine Side-Effects)
+───────────────────────────────────────────── */
+
+.overlay--sun {
+  /* warmes “Sun Glow” statt violettem Abend-Glow */
+  background:
+    radial-gradient(circle at 30% 15%, rgba(255, 214, 150, 0.22), transparent 55%),
+    radial-gradient(circle at 70% 35%, rgba(255, 235, 190, 0.16), transparent 55%),
+    rgba(0, 0, 0, 0.55);
+}
+
+.popup--sun {
+  /* zarter warmer Touch */
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+}
+
+.sun-eyebrow {
+  color: rgba(255, 214, 150, 0.92);
+}
+
+.sun-title {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.sun-text {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.sun-muted {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.sun-box {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+}
+
+.sun-link {
+  color: rgba(255, 214, 150, 0.95);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Partikel-Layer */
+.sun-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0; /* unter Popup */
+}
+
+/* “Warm light particles” */
+.sun-particle {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 214, 150, 0.95), rgba(255, 214, 150, 0.0) 65%);
+  filter: blur(var(--blur, 10px));
+  animation-name: sunfloat;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  mix-blend-mode: screen;
+}
+
+@keyframes sunfloat {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(var(--dx, 12px), 55vh, 0);
+  }
+  100% {
+    transform: translate3d(calc(var(--dx, 12px) * -0.6), 115vh, 0);
   }
 }
 

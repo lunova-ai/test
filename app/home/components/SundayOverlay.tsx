@@ -1,15 +1,15 @@
 import { useEffect, useMemo, type CSSProperties } from "react";
 
-export function GirlsNightOverlay({
+export function SundayOverlay({
   open,
-  animateBubbles,
+  animateSun,
   onClose,
 }: {
   open: boolean;
-  animateBubbles: boolean;
+  animateSun: boolean;
   onClose: () => void;
 }) {
-  // 🔒 Globales Overlay-Flag (für WhatsApp Button & generell UI)
+  // 🔒 Globales Overlay-Flag
   useEffect(() => {
     if (!open) return;
 
@@ -17,7 +17,6 @@ export function GirlsNightOverlay({
     document.body.dataset.overlay = "open";
     window.dispatchEvent(new Event("overlay:change"));
 
-    // ESC schließt
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -33,33 +32,34 @@ export function GirlsNightOverlay({
     };
   }, [open, onClose]);
 
-  // Bubbles: deterministisch pro open (kein “Flackern” bei re-render)
-  const bubbles = useMemo(() => {
-    if (!animateBubbles) return [];
+  const particles = useMemo(() => {
+    if (!animateSun) return [];
+
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
-    const count = reduceMotion ? 6 : 16;
+    const count = reduceMotion ? 8 : 18;
 
     return Array.from({ length: count }).map((_, i) => {
-      const size = 16 + Math.random() * 55;
+      const size = 10 + Math.random() * 34;
 
       return {
         key: i,
         style: {
-          left: `${Math.random() * 95}%`,
+          left: `${Math.random() * 96}%`,
+          top: `${-10 - Math.random() * 25}%`,
           width: `${size}px`,
           height: `${size}px`,
-          animationDuration: `${9 + Math.random() * 7}s`,
-          animationDelay: `${Math.random() * 2}s`,
-          ["--dx1" as any]: `${-30 + Math.random() * 60}px`,
-          ["--dx2" as any]: `${-50 + Math.random() * 100}px`,
-          ["--dx3" as any]: `${-40 + Math.random() * 80}px`,
+          opacity: `${0.25 + Math.random() * 0.35}`,
+          animationDuration: `${7 + Math.random() * 7}s`,
+          animationDelay: `${Math.random() * 1.8}s`,
+          // leichter Drift
+          ["--dx" as any]: `${-22 + Math.random() * 44}px`,
         } as CSSProperties,
       };
     });
-  }, [animateBubbles]);
+  }, [animateSun]);
 
   if (!open) return null;
 
@@ -68,7 +68,7 @@ export function GirlsNightOverlay({
       className="overlay overlay--glow"
       role="dialog"
       aria-modal="true"
-      aria-label="Mädlsabend Details"
+      aria-label="Sonntag Details"
       onClick={onClose}
     >
       <button
@@ -84,27 +84,28 @@ export function GirlsNightOverlay({
       </button>
 
       <div className="popup popup--glass" onClick={(e) => e.stopPropagation()}>
-        <p className="girls-eyebrow text-xs tracking-[0.28em] uppercase">
-          Mädlsabend
+        <p className="text-xs tracking-[0.28em] uppercase text-[var(--brand)]">
+          Sonntag
         </p>
 
-        <h2 className="girls-title mt-2 text-2xl md:text-3xl font-cinzel">
-          🍸 Jeden Donnerstag
+        <h2 className="mt-2 text-2xl md:text-3xl font-cinzel text-[var(--dark)]">
+          ☀️ Durchgehend Küche
         </h2>
 
-        <p className="girls-text mt-3 text-base md:text-lg leading-relaxed">
-          Ab <span className="font-semibold">16 Uhr</span> – gratis Cocktail{" "}
-          <span className="girls-muted">(mit &amp; ohne Alk.)</span>
+        <p className="mt-3 text-base md:text-lg leading-relaxed text-[#555]">
+          Jeden Sonntag von <span className="font-semibold">11–19 Uhr</span> –
+          perfekt für einen entspannten Sonntag{" "}
+          <span className="text-[#666]">(ohne Küchenpause)</span>.
         </p>
 
-        <div className="girls-box mt-5 text-left">
-          <p className="girls-text text-sm">
+        <div className="mt-5 text-left rounded-2xl border border-white/10 bg-black/20 backdrop-blur px-4 py-3">
+          <p className="text-sm text-white/90">
             📞 Reservierung:{" "}
-            <a className="girls-link" href="tel:+436649238843">
+            <a className="underline underline-offset-2" href="tel:+436649238843">
               +43 664 923 8843
             </a>
           </p>
-          <p className="girls-muted mt-1 text-sm">
+          <p className="mt-1 text-sm text-white/70">
             Oder schreib uns per WhatsApp / Kontaktformular.
           </p>
         </div>
@@ -118,15 +119,15 @@ export function GirlsNightOverlay({
           </a>
         </div>
 
-        <p className="girls-muted mt-4 text-xs">
+        <p className="mt-4 text-xs text-white/70">
           Tipp: ESC oder Klick außerhalb schließt das Fenster.
         </p>
       </div>
 
-      {animateBubbles && (
-        <div className="bubble-layer" aria-hidden="true">
-          {bubbles.map((b) => (
-            <div key={b.key} className="bubble bubble-lux" style={b.style} />
+      {animateSun && (
+        <div className="sun-layer" aria-hidden="true">
+          {particles.map((p) => (
+            <div key={p.key} className="sun-particle" style={p.style} />
           ))}
         </div>
       )}
