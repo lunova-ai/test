@@ -1,6 +1,6 @@
 "use client";
 
-import FadeIn from "../components/FadeIn";
+import FadeIn from "../home/components/FadeIn";
 
 export default function DatenschutzPage() {
   return (

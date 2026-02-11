@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import FadeIn from "../components/FadeIn";
+import FadeIn from "../home/components/FadeIn";
 import Link from "next/link";
 
 type PizzaAnswer = "classic" | "creative" | "sharing" | "comfort";

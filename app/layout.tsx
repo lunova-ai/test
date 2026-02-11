@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
-import MobileMenuButton from "./components/MobileMenuButton";
-import MobileMenu from "./components/MobileMenu";
-import WhatsAppButton from "./components/WhatsAppButton";
+import MobileMenuButton from "./home/components/MobileMenuButton";
+import MobileMenu from "./home/components/MobileMenu";
+import WhatsAppButton from "./home/components/WhatsAppButton";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {

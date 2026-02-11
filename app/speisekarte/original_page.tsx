@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import FadeIn from "../components/FadeIn";
+import FadeIn from "../home/components/FadeIn";
 
 /* ------------------------------------------------------
    PAGE – SPEISEKARTE (NEUES EDLERES DESIGN)
